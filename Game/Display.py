@@ -1,4 +1,5 @@
+
 def game_display(screen,players,obstacles):
-    print(obstacles)
+    screen.fill("blue")
     obstacles.draw(screen)
     players.draw(screen)
