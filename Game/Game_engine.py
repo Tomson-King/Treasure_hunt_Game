@@ -29,18 +29,31 @@ class Player(pygame.sprite.Sprite):
         key=pygame.key.get_pressed()
         if key[pygame.K_w]:
             self.y+=delta
+            if self.player_collision():
+                self.y-=delta
         if key[pygame.K_s]:
             self.y-=delta
+            if self.player_collision():
+                self.y+=delta
         if key[pygame.K_a]:
             self.x+=delta
+            if self.player_collision():
+                self.x-=delta
         if key[pygame.K_d]:
             self.x-=delta
+            if self.player_collision():
+                self.x+=delta
         self.pos=(int(self.x),int(self.y))
         with open("./Game/game_attributes.json","r") as f:
             gameatts=json.load(f)
         self.screen_x=gameatts["screen"]["width"]
         self.screen_y=gameatts["screen"]["height"] 
-        self.rect.midbottom=(self.screen_x//2,self.screen_y//2)         
+        self.rect.midbottom=(self.screen_x//2,self.screen_y//2)
+    def player_collision(self):
+        x=Map(self,(0,0))
+        Obstacles=x.create_Obstacles(self)
+        return  pygame.sprite.spritecollide(self,Obstacles,False)
+
 
     def update(self):
         self.movement()
@@ -58,14 +71,30 @@ class Map(pygame.sprite.Sprite):
             gameatts=json.load(f)
         self.screen_x=gameatts["screen"]["width"]
         self.screen_y=gameatts["screen"]["height"]
-        img=None      
-        img=map[str(coords)]
+        self.img=None
+        match(map[str(coords)]): 
+            
+             
+            case "Deep Ocean": self.img="#01579B"
+            
+            case"Mid-Depth Water":self.img="#0288D1"
+            
+            case "Shallow Reef / Coast": self.img="#4DD0E1"
+            
+            case "Grassland": self.img="#4CAF50"
+            
+            case "Beach / Sand": self.img="#F4E1A1"
+            
+            case "Forest": self.img="#2E7D32"
+            
+            case "Highland / Peak": self.img="#795548"
+            
         self.grid=100
         self.pos = (int(((0-coords[0])*self.grid+player.pos[0])+self.screen_x//2),int(((0-coords[1])*self.grid+player.pos[1])+self.screen_y//2))
         
         self.image= pygame.Surface((self.grid,self.grid))
-        if(img!=None):   
-            self.image.fill(img)
+        if(self.img!=None):   
+            self.image.fill(self.img)
         elif((coords[0]%2!=0 and coords[1]%2==0) or (coords[0]%2==0 and coords[1]%2!=0)):
             self.image.fill("green")
         else:
@@ -99,7 +128,52 @@ class Map(pygame.sprite.Sprite):
                     
                     break
                 else:
+                   
                     obstacles.add(obstacle)
+                j-=1
+            i-=1
+            j=topleft[1]       
+
+            if (obstacle.pos[0]< -2*(obstacle.grid) or obstacle.pos[0]> (self.screen_x+obstacle.grid)):
+                break
+        
+        
+        return obstacles
+
+    def create_Obstacles(self,player):
+        
+
+        center = self.get_center(player)
+        topleft=(center[0]+int(((self.screen_x/2)+self.grid)//self.grid),center[1]+int(((self.screen_y/2)+self.grid)//self.grid))
+        obstacles=pygame.sprite.Group()
+        obstacles.empty()
+        i,j=topleft
+        
+        
+        while(True):
+            while(True):
+                obstacle=Map(player,(i,j))
+                
+                if (obstacle.pos[1]< -2*(obstacle.grid) or obstacle.pos[1]> (self.screen_y+obstacle.grid)):
+                    
+                    break
+                else:
+                     match(map[str((i,j))]): 
+            
+             
+                        case "Deep Ocean": pass
+                        
+                        case"Mid-Depth Water":pass
+                        
+                        case "Shallow Reef / Coast": pass
+                        
+                        case "Grassland": obstacles.add(obstacle)
+                        
+                        case "Beach / Sand": obstacles.add(obstacle)
+                        
+                        case "Forest": obstacles.add(obstacle)
+                        
+                        case "Highland / Peak": obstacles.add(obstacle)
                 j-=1
             i-=1
             j=topleft[1]       
@@ -120,6 +194,8 @@ class Chest(pygame.sprite.Sprite):
         super().__init__()
     def update(self):
         pass
+
+
 def change_map():
     with open("./Game/sea_and_islands.json","r") as f:
              map=json.load(f)
@@ -137,6 +213,7 @@ def start_game():
     return player
 
 
+
 def continue_game():
     with open("./Game/game_attributes.json","r") as f:
         gameatts=json.load(f)
@@ -148,7 +225,7 @@ def game(screen,player):
     players=pygame.sprite.GroupSingle()
     players.add(player)
     players.update()
-    obstacle=Map(player,(0,0))
-    obstacles=obstacle.create_map(player)
-    game_display(screen,players,obstacles)
+    x=Map(player,(0,0))
+    gamemap=x.create_map(player)
+    game_display(screen,players,gamemap)
     
