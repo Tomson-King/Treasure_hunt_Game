@@ -11,7 +11,7 @@ class Main():
             gameatts=json.load(f)
         SCR_WDT, SCR_HGT=1280,720
         pygame.init()
-        screen = pygame.display.set_mode((SCR_WDT, SCR_HGT),pygame.RESIZABLE)
+        screen = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
         gameatts["screen"]["width"]=SCR_WDT
         gameatts["screen"]["height"]=SCR_HGT
         with open("./Game/game_attributes.json","w") as f:
@@ -33,23 +33,18 @@ class Main():
                     exit()
                 if (event.type == pygame.KEYDOWN):
                     if(event.key == pygame.K_ESCAPE):
-                        exit()
-                    if (event.key == pygame.K_RETURN):
-                        if not start:
-                            start=True
-                            player = start_game()
-                        
-            if start:
-                game(screen,player)
+                        menu=True
             
             if(menu):
-                pass#Menu
+                pygame.mouse.set_visible(True)
+                _=Menu(screen)
+                menu,player=_.menu,_.player
             else:
-                pass#game
+                pygame.mouse.set_visible(False)
+                game(screen,player)
             pygame.display.update()
             clock.tick(60)
             
         pygame.quit()
-
 
 Main()

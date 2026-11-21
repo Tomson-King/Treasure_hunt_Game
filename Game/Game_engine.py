@@ -11,7 +11,7 @@ class Player():
     # major atributes
     # player (x,y)
     
-    def __init__(self):
+    def __init__(self,coords):
         with open("./Game/game_attributes.json","r") as f:
             gameatts=json.load(f)
         self.screen_x=gameatts["screen"]["width"]
@@ -20,8 +20,8 @@ class Player():
         self.image.fill("red")
         self.rect=self.image.get_rect()
         self.rect.midbottom=(self.screen_x//2,self.screen_y//2)
-        self.x=0
-        self.y=0
+        self.x=coords[0]
+        self.y=coords[1]
         self.pos=(int(self.x),int(self.y)) 
         self.key={'w': True,'s': True,'a': True,'d': True}
         self.delta=10
@@ -42,14 +42,16 @@ class Player():
         if key[pygame.K_d]:
             self.player_collision()
             if self.key['d']: self.x-=self.delta
-        self.pos=(int(self.x),int(self.y))   
-        
-        
+        self.pos=(int(self.x),int(self.y))  
         with open("./Game/game_attributes.json","r") as f:
-            gameatts=json.load(f)
+            gameatts=json.load(f) 
+        gameatts["player"]["x"],gameatts["player"]["y"]=int(self.x),int(self.y)
+    
         self.screen_x=gameatts["screen"]["width"]
         self.screen_y=gameatts["screen"]["height"] 
         self.rect.midbottom=(self.screen_x//2,self.screen_y//2)
+        with open("./Game/game_attributes.json","w") as f:
+            json.dump(gameatts,f,indent=4)
     def player_collision(self):
         obstacle=Map(self,(0,0))
         Obstacles=obstacle.create_Obstacles(self)
@@ -57,13 +59,13 @@ class Player():
         pos=self.rect.midbottom
         
         for i in Obstacles:
-            if i[0].collidepoint(pos[0],pos[1]+self.delta):
+            if i.collidepoint(pos[0],pos[1]+self.delta):
                 self.key['s']=False
-            if i[0].collidepoint(pos[0],pos[1]-self.delta):
+            if i.collidepoint(pos[0],pos[1]-self.delta):
                 self.key['w']=False
-            if i[0].collidepoint(pos[0]+self.delta,pos[1]):
+            if i.collidepoint(pos[0]+self.delta,pos[1]):
                 self.key['d']=False
-            if i[0].collidepoint(pos[0]-self.delta,pos[1]):
+            if i.collidepoint(pos[0]-self.delta,pos[1]):
                 self.key['a']=False
 
 
@@ -72,9 +74,7 @@ class Player():
     def update(self):
         self.movement()
 
-
-
-class Map(pygame.sprite.Sprite):
+class Map():
     # should update based on player coords
     
     
@@ -142,7 +142,7 @@ class Map(pygame.sprite.Sprite):
                     break
                 else:
                    
-                    obstacles.append((obstacle.rect,obstacle.image))
+                    obstacles.append((obstacle.image,obstacle.rect))
                 j-=1
             i+=1
             j=topleft[1]       
@@ -177,13 +177,13 @@ class Map(pygame.sprite.Sprite):
                         
                     case "Shallow Reef / Coast": pass
                         
-                    case "Grassland": obstacles.append((obstacle.rect,obstacle.image))
+                    case "Grassland": obstacles.append((obstacle.rect))
                         
-                    case "Beach / Sand": obstacles.append((obstacle.rect,obstacle.image))
+                    case "Beach / Sand": obstacles.append((obstacle.rect))
                         
-                    case "Forest": obstacles.append((obstacle.rect,obstacle.image))
+                    case "Forest": obstacles.append((obstacle.rect))
                         
-                    case "Highland / Peak": obstacles.append((obstacle.rect,obstacle.image))
+                    case "Highland / Peak": obstacles.append((obstacle.rect))
                 j-=1
             i+=1
             j=topleft[1]       
@@ -195,14 +195,11 @@ class Map(pygame.sprite.Sprite):
     def update(self):
         pass
 
-
-
-class Chest(pygame.sprite.Sprite):
+class Chest():
     def __init__(self):
         super().__init__()
     def update(self):
         pass
-
 
 def change_map():
     with open("./Game/sea_and_islands.json","r") as f:
@@ -210,29 +207,11 @@ def change_map():
     with open("./Game/map.json","w") as f:
             json.dump(map,f,indent=4)
 
-def start_game():
-    player=Player()
-    
-    with open("./Game/sea_and_islands.json","r") as f:
-            map=json.load(f)
-    with open("./Game/map.json","w") as f:
-            json.dump(map,f,indent=4)
-    
-    return player
 
-
-
-def continue_game():
-    with open("./Game/game_attributes.json","r") as f:
-        gameatts=json.load(f)
-    player=Player()
-    player.x=gameatts["player"]["x"]
-    player.y=gameatts["player"]["y"]
 
 def game(screen,player):
-    players=[(player.rect,player.image)]
+    players=[(player.image,player.rect)]
     player.update()
-    x=Map(player,(0,0))
-    gamemap=x.create_map(player)
-    game_display(screen,players,gamemap)
+    gamemap=Map(player,(0,0)).create_map(player)
+    Display(screen,[gamemap,players])
     
